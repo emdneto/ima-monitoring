@@ -1,5 +1,6 @@
 from flask_restful import Resource, reqparse
 from core.ds import DSManagement
+from core.monitoring_modules.data_consumer import Monitoring
 from flask import jsonify
 import os
 import sys
@@ -15,23 +16,31 @@ class StartMonitoring(Resource):
     '''
     def post(self):
         parser = reqparse.RequestParser()
-        parser.add_argument('slice_id', type=str, help='Missing Slice Identification', required=True)
+        parser.add_argument('slice_id', type=int, help='Missing Slice Identification', required=True)
         parser.add_argument('slice_name', type=str, help='Missing Slice name', required=True)
         parser.add_argument('bridges', type=list, help='Bridges list', default=[])
         parser.add_argument('ports', type=list, help='ports list', default=[])
         parser.add_argument('edge', type=list, default=[])
+        
         args = parser.parse_args()
         #e2eAdaptorID = uuid.uuid4().hex
-        e2eAdaptorID = int(args['slice_id'])
+        e2eAdaptorID = args['slice_id']
+        args['e2eAdaptor_instance_id'] = e2eAdaptorID
+
         tryNew = ds._create(e2eAdaptorID, args)
+        
         if not tryNew:
             resp = jsonify('Error')
             resp.status_code = 400
             return resp
         
-        args['e2eAdaptor_instance_id'] = e2eAdaptorID
-               
-        return args
+        newMonitoring = Monitoring(args)
+        t = {"instance": newMonitoring, "e2eAdaptorID": e2eAdaptorID}     
+        ds.updateMonitoringInstanceId(e2eAdaptorID,t)
+        
+        return args        
+  
+
     
 class UpdateMonitoring(Resource):
     
@@ -41,10 +50,12 @@ class UpdateMonitoring(Resource):
 class ListMonitoring(Resource):
     
     def get(self):
-        monitoring_dict= ds._list()
+        monitoring_dict = ds._list()
         copy = []
         for key in monitoring_dict.keys():
-            copy.append(monitoring_dict[key])
+            if key != 'monitoring_instance':
+                copy.append(monitoring_dict[key])
+                
         return copy
 
 class DeleteMonitoringById(Resource):
@@ -63,10 +74,17 @@ class DeleteMonitoringById(Resource):
             dr1 = delete[1]
             b = type(dr1).__name__
             resp = jsonify()
-            #resp.type(dr1).__name__ = str(dr1)
-            #resp = {type(dr1).__name__: str(dr1)}
             resp.status_code = 400
             return resp
         
+        a = ds.listInstances()
+        for obj in a:
+            if obj['e2eAdaptorID'] == e2eAdaptorID:
+                instance = obj['instance']
+                print(dir(instance))
+                instance.e2eAdaptorActive = False
+                ds.deleteInstance(obj)
+              
+            
         return jsonify(success=True)
         

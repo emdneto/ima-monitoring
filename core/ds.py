@@ -7,6 +7,7 @@ class DataStorer(object):
     def __init__(self):
         
         self.e2eActiveAdaptors = {}
+        self.instances = []
 
 class DSManagement(DataStorer):
     
@@ -24,7 +25,7 @@ class DSManagement(DataStorer):
             
     
     def _create(self, uuid=None, data={}):
-        e2eAdaptorID = uuid
+        e2eAdaptorID = int(uuid)
         
         if not self._checkParams(e2eAdaptorID, data):    
             self.log.debug('Failed to create. None values. Check the given parameters.')
@@ -66,6 +67,25 @@ class DSManagement(DataStorer):
         
         except Exception as e:
             return (False, e)
+        
+    def updateMonitoringInstanceId(self, uuid, data):
+        e2eAdaptorID = uuid
+        
+        if e2eAdaptorID not in self.e2eActiveAdaptors:
+            self.log.error('Monitoring does not exists. IMA could not store the slice monitoring. ')
+            return False
+        
+        #print(dir(data))
+        #self.e2eActiveAdaptors[e2eAdaptorID]['monitoring_instance'] = data
+        self.instances.append(data)
+        return True
+        
+    def listInstances(self):
+        return self.instances
+    
+    def deleteInstance(self, instance):
+        self.instances.remove(instance)
+        
         
     def _delete(self, uuid=None):
         e2eAdaptorID = uuid   
