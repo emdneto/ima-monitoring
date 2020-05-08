@@ -25,7 +25,7 @@ class PrometheusWrapper(object):
         return Translate(results)
             
 class Translate(object):
-    
+
     def __init__(self, results, **kwargs):
         self.queryResults = results
         

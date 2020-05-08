@@ -43,7 +43,8 @@ class Monitoring(PikaConnection):
         thread.start()
         #thread.join()
         #self.startNetworkMonitor()
-        
+
+# TO DO: Colocar essas funções p/ executarem de forma assíncrona.        
     def startMonitor(self):
         self.startNetworkMonitor()
         
