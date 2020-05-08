@@ -2,45 +2,54 @@ import pika
 import sys
 import time
 import threading
+import logging
 
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 class SROConsumerInterface(object):
     
     def __init__(self):
         pass
-        
-        
-class PikaConnection():
 
+class PikaConnection(object):
+    
+    _pikaInstance = None
+    
+    def __new__(cls, *args, **kwargs):
+        if cls._pikaInstance is None:
+            cls._pikaInstance = super(PikaConnection, cls).__new__(cls)
+        
+        return cls._pikaInstance
+    
     def __init__(self):
-        super().__init__()
-        #self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        self.log = logging.getLogger("PikaConnection")
+        
+        try:
+            self.connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+        except Exception as e:
+            self.log.error('Failed to connect Rabbitmq server')
+        
         #self.channel = self.connection.channel()
-
-    def pikaCloseConnection(self):
-        self.connection.close()
-        
-        
+       
         
 class Monitoring(PikaConnection):
     
     def __init__(self, data={}):
         super().__init__()
+        self.log = logging.getLogger("Monitoring")
         self.e2eAdaptorID = data['e2eAdaptor_instance_id']
         self.e2eAdaptorActive = True
-        thread = threading.Thread(target=self.startNetworkMonitor, args=())
+        thread = threading.Thread(target=self.startMonitor, args=())
         thread.daemon = True
         thread.start()
-        thread.join()
+        #thread.join()
         #self.startNetworkMonitor()
         
-    def startNetworkMonitor(self):
-        #self.channel.exchange_declare(exchange='metrics', exchange_type='fanout')
-        i = 0
-        while self.e2eAdaptorActive:
-            message = 'Message ' + str(i)
-            print(message)
-            time.sleep(5)
-            i += 1
+    def startMonitor(self):
+        self.startNetworkMonitor()
+        
+        
+        
+        
         
 
         
