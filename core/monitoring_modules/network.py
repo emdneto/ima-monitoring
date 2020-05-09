@@ -1,15 +1,24 @@
 import time
+from core.monitoring_modules.utils.prometheus_wrapper import PrometheusWrapper
+
+'''
+Metrics: Bandwidth, packet loss, RX/TX
+'''
 class NetworkMonitoring(object):
     
-    def __init__(self, e2eData, conn):
-        super().__init__()
-        self.shouldPublish = True
-        self.e2eAdaptorId
+    def __init__(self, slps):
+        #self.e2eAdaptorId
+        self.slps = slps
+        self.prometheus = PrometheusWrapper()
     
     def NetworkMonitoringCollector(self):
-        pass
+        query = 'node_memory_MemFree_bytes'
+        results = self.prometheus.runQuery(query)
+        return results
     
-    def NetworkMonitoringPublisher(self):
+    def _buildQuery(self):
+        TX = "node_network_transmit_total{job='network-slice-monitor}"
+    """ def NetworkMonitoringPublisher(self):
         channel = self.connection.channel()
         channel.exchange_declare(exchange='metrics', exchange_type='fanout')
         
@@ -21,4 +30,4 @@ class NetworkMonitoring(object):
             time.sleep(5)
             i += 1
         channel.close()
-        print('parou')
+        print('parou') """

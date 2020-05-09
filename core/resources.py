@@ -15,16 +15,12 @@ class StartMonitoring(Resource):
     Controller /necos/ima/start_monitoring -- Instantiate a new monitoring and store it.
     '''
     def post(self):
-        print(dir(self))
+    
         parser = reqparse.RequestParser()
         parser.add_argument('slice_id', type=int, help='Missing Slice Identification', required=True)
         parser.add_argument('slice_name', type=str, help='Missing Slice name', required=True)
         parser.add_argument('slice_parts', type=dict, action='split')
-        #parser.add_argument()
-        #parser.add_argument('bridges', type=list, help='Bridges list', default=[])
-        #parser.add_argument('ports', type=list, help='ports list', default=[])
-        #parser.add_argument('edge', type=list, default=[])
-        
+
         args = parser.parse_args()
         #e2eAdaptorID = uuid.uuid4().hex
         e2eAdaptorID = args['slice_id']
@@ -37,9 +33,9 @@ class StartMonitoring(Resource):
             resp.status_code = 400
             return resp
         
-        #newMonitoring = Monitoring(args)
-        #t = {"instance": newMonitoring, "e2eAdaptorID": e2eAdaptorID}     
-        #ds.updateMonitoringInstanceId(e2eAdaptorID,t)
+        newMonitoring = Monitoring(args)
+        t = {"instance": newMonitoring, "e2eAdaptorID": e2eAdaptorID}     
+        ds.updateMonitoringInstanceId(e2eAdaptorID,t)
         
         return args        
   
@@ -82,7 +78,7 @@ class DeleteMonitoringById(Resource):
         
         
         a = ds.listInstances()
-        # TODO: Place this logic in DataStores
+        # TODO: Place this logic in DataStorer
         for obj in a:
             if obj['e2eAdaptorID'] == e2eAdaptorID:
                 instance = obj['instance']

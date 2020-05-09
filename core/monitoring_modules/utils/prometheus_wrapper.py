@@ -13,16 +13,17 @@ class PrometheusWrapper(object):
     def __init__(self, **kwargs):
         
         self.PROMETHEUS_SERVER = 'http://demo.robustperception.io:9090/'
+        #self.PROMETHEUS_SERVER = 'http://10.7.229.183:9090/'
         self.PROMETHEUS_API = self.PROMETHEUS_SERVER + '/api/v1/query' 
         
-    def makeQuery(self, query):
+    def runQuery(self, query):
         
-        response = requests.get(self.PROMETHEUS_API,
+        response = requests.post(self.PROMETHEUS_API,
                                 params={
                                     'query': query
                                 })
         results = response.json()['data']['result']
-        return Translate(results)
+        return results
             
 class Translate(object):
 
@@ -38,10 +39,10 @@ class Translate(object):
             
 
 
-a = PrometheusWrapper()
-query = 'node_memory_MemFree_bytes'
-results = a.makeQuery(query)    
-print(dir(results))
+#a = PrometheusWrapper()
+#query = 'node_memory_MemFree_bytes'
+#results = a.makeQuery(query)    
+#print(results)
 #for result in results:
 #    print(result['value'])
     #print(' {metric}: {value[1]}'.format(**result))

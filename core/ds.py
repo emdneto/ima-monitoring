@@ -1,6 +1,6 @@
 import logging
 import sys
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+#logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
               
 class DataStorer(object):
     
@@ -10,7 +10,9 @@ class DataStorer(object):
         self.instances = []
 
 class DSManagement(DataStorer):
-    
+    """
+    tO DO: Singleton class
+    """
     def __init__(self):
         super().__init__()
         self.log = logging.getLogger("DSManagement")
