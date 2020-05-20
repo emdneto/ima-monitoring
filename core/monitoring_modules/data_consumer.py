@@ -4,6 +4,9 @@ import time
 import threading
 import logging
 from core.monitoring_modules.network import NetworkMonitoring
+from core.monitoring_modules.cloud import CloudMonitoring
+#from network import NetworkMonitoring
+#from cloud import CloudMonitoring
 
 #logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 class SROConsumerInterface(object):
@@ -49,9 +52,10 @@ class Monitoring(PikaConnection):
         slps = {}        
         e2eAdaptorId = self.sliceData['e2eAdaptor_instance_id']
         slice_parts = self.sliceData['slice_parts']
+        print (slps)
         
-        #slps['NET'] = []
-        #slps['DC'] = []
+        slps['NET'] = []
+        slps['DC'] = []
         #slps['EDGE'] = []
         #slps['WIFI'] = []
         
@@ -71,14 +75,14 @@ class Monitoring(PikaConnection):
 
             
         
-        #net = NetworkMonitoring(slps['NET'])
+        net = NetworkMonitoring(slps['NET'])
         #edge = EdgeMonitoring(slps['EDGE'])
-        #dc = CloudMonitoring(slps['DC'])
+        dc = CloudMonitoring(slps['DC'])
         #wifi = WifiMonitoring(slps['WIFI'])
         
         i = 0
         while self.e2eAdaptorActive:
-            #network_metrics = net.NetworkMonitoringCollector()
+            network_metrics = net.NetworkMonitoringCollector()
             #edge_metrics = edge.EdgeMonitoringCollector()
             #dc_metrics 
             #message = str(self.e2eAdaptorId) + ' - Message' + str(i) +  ' ' + str(network_metrics)
@@ -94,12 +98,12 @@ class Monitoring(PikaConnection):
         print('parou') 
 
         
-        
+#        slps = {"slice_id": 5,"slice_name": "Fon_Slices","slice_parts": [{"slice_part_id": 157,"slice_part_name": "Fon_slices_Cloud","type": "DC","vdus": []},{"slice_part_id": 1050,"slice_part_name": "Fon_slice_Edge","type": "EDGE","vdus": []},{"slice_part_id": 8005,"slice_part_name": "Fon_slice_Network","type": "NET","vdus": [],"bridges": [],"ports": []}]}
+       
         
         
 
         
-        #self.connection = pika.
-        
+        self.connection = pika
     
         
