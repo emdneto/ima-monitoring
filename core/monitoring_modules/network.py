@@ -6,16 +6,46 @@ from core.monitoring_modules.utils.prometheus_wrapper import PrometheusWrapper
 Metrics: Bandwidth, packet loss, RX/TX
 '''
 class NetworkMonitoring(object):
-    
     def __init__(self, slps):
-        #self.e2eAdaptorId
         self.slps = slps
         self.prometheus = PrometheusWrapper()
     
-    def NetworkMonitoringCollector(self):
-        query = 'node_memory_MemFree_bytes'
+    #especificar o job exemplo:{job="network-slice-monitor"}
+    def NetworkMonitoringCollector(self, slps):
+      instances = []
+      for slp in slps:
+        instances.append(slp['pcpe_address']+':9100')
+      metrics_per_instance = {}
+      metrics_per_instance['slice_parts'] = {}
+
+#      instances = ['demo.robustperception.io:9100']
+      for instance in instances:
+        instance_str = ("instance='" + instance + "'")
+        query = "(100 - (avg by (instance) (irate(node_cpu_seconds_total{mode='idle'," + instance_str + "}[5m])) * 100)) or ((node_memory_MemTotal_bytes - (node_memory_Cached_bytes + node_memory_Buffers_bytes + node_memory_MemFree_bytes{" + instance_str + "}))/1024/1024) or sum(rate(node_network_transmit_bytes_total{" + instance_str + "}[1m])/1024/1024) or rate(node_disk_read_bytes_total{"+ instance_str +"}[1m])"
         results = self.prometheus.runQuery(query)
-        return results
+        metrics_per_instance['slice_parts'][instance] = results
+      
+      for i in metrics_per_instance['slice_parts']:
+        if len(metrics_per_instance['slice_parts'][i]) > 0:
+          for a in (metrics_per_instance['slice_parts'][i]):
+            if metrics_per_instance['slice_parts'][i].index(a) == 0:
+              cpu = ({'cpu': a['value'][1]})
+            elif metrics_per_instance['slice_parts'][i].index(a) == 1:
+              mem_used = ({'memory_used': a['value'][1]})
+            elif metrics_per_instance['slice_parts'][i].index(a) == 2:
+              tx = ({'bandwidth_tx': a['value'][1]})
+            elif metrics_per_instance['slice_parts'][i].index(a) == 3:
+              disk_read = ({'disk_read': a['value'][1]})
+          z = dict(list(cpu.items()) + list(mem_used.items()) + list(tx.items()) + list(disk_read.items()))
+          metrics_per_instance['slice_parts'].update({i: z})
+
+      for unit in instances:
+        for mslp in slps:
+          if (unit) == (mslp['pcpe_address']+":9100"):
+            mslp['metrics'] = {}
+            mslp['metrics'] = metrics_per_instance['slice_parts'][unit]
+        
+      return slps
     
     def _buildQuery(self):
         TX = "node_network_transmit_total{job='network-slice-monitor}"

@@ -20,7 +20,7 @@ class ControllerRestfulAPI(object):
         self.api.add_resource(DeleteMonitoringById, '/necos/ima/delete_monitoring')
         
     def run(self):
-        self.app.run(host='0.0.0.0', port='8080', debug=True)
+        self.app.run(host='0.0.0.0', port='5010', debug=True)
 
     #def main(self):
     #    print('Hello world')

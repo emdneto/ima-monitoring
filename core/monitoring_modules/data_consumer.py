@@ -2,6 +2,7 @@ import pika
 import sys
 import time
 import threading
+import requests
 import logging
 from core.monitoring_modules.network import NetworkMonitoring
 from core.monitoring_modules.cloud import CloudMonitoring
@@ -33,7 +34,7 @@ class PikaConnection(object):
         except Exception as e:
             self.log.error('Failed to connect Rabbitmq server')
         
-        #self.channel = self.connection.channel()
+        self.channel = self.connection.channel()
        
         
 class Monitoring(PikaConnection):
@@ -53,13 +54,14 @@ class Monitoring(PikaConnection):
         slps = {}        
         e2eAdaptorId = self.sliceData['e2eAdaptor_instance_id']
         slice_parts = self.sliceData['slice_parts']
+        slice_name = self.sliceData['slice_name']
 #        print (e2eAdaptorId) 
         slps['NET'] = []
         slps['DC'] = []
         slps['EDGE'] = []
         slps['WIFI'] = []
 
-
+        #SRO_URL = 10.7.229.90:5003
 
         for type_slp in slice_parts:
             for slice_part in (slice_parts[type_slp]):
@@ -73,9 +75,6 @@ class Monitoring(PikaConnection):
                     slps[slp_type] = []
                     slps[slp_type].append(slice_part)
                 #slps[slp_type][]
-
-
-        print (slps)
                  
         if len(slps['NET']) != 0:
           net = NetworkMonitoring(slps['NET'])
@@ -86,31 +85,39 @@ class Monitoring(PikaConnection):
         if len(slps['WIFI']) != 0:
           wifi = WifiMonitoring(slps['WIFI'])
 
+        print (slps['DC'])
+
         i = 0
         while self.e2eAdaptorActive:
             if len(slps['NET']) != 0:
-                network_metrics = net.NetworkMonitoringCollector()
+                network_metrics = net.NetworkMonitoringCollector(slps['NET'])
             if len(slps['EDGE']) != 0:
-                edge_metrics = edge.EdgeMonitoringCollector()
+                edge_metrics = edge.EdgeMonitoringCollector(slps['EDGE'])
             if len(slps['DC']) != 0:
-                dc_metrics = dc.CloudMonitoringCollector()
+                dc_metrics = dc.CloudMonitoringCollector(slps['DC'])
+                print (dc_metrics)
             #if len(slps['WIFI']) != 0:
             #    wifi_metrics = wifi.WifiMonitoringCollector()
             #print (dc_metrics)
             #message = str(self.e2eAdaptorId) + ' - Message' + str(i) +  ' ' + str(network_metrics)
             #channel.basic_publish(exchange='metrics', routing_key=str(self.e2eAdaptorId), body=message)
-            
+            self.channel.exchange_declare(exchange='metrics', exchange_type='fanout')
             message = str(e2eAdaptorId) + ' - Message ' + str(i)
-            #print(slps['DC'])
             print(" [x] Sent %r" % message)
-            #channel.basic_publish(exchange='metrics', routing_key=str(self.e2eAdaptorId), body=slice_data)
+            routing_key = str(e2eAdaptorId)
+            slice_data = {"slice_id": str(e2eAdaptorId), "slice_name": slice_name}
+            slice_data['slice_parts'] = {}
+            slice_data['slice_parts']['edge'] = edge_metrics
+            slice_data['slice_parts']['dc'] = dc_metrics
+            slice_data['slice_parts']['net'] = network_metrics
+#            slice_data['slice_parts']['wifi'] = wifi_metrics
+#            response = requests.post(url=self.SRO_URL+"start_monitoring", json=slice_info)
+            #self.channel.basic_publish(exchange='metrics', routing_key=routing_key, body=message)
+            self.channel.basic_publish(exchange='metrics', routing_key=routing_key, body=str(slice_data))
             time.sleep(5)
             i += 1
         #channel.close()
         print('parou') 
-
-         
-#        slps = {"slice_id": 5,"slice_name": "Fon_Slices","slice_parts": [{"slice_part_id": 157,"slice_part_name": "Fon_slices_Cloud","type": "DC","vdus": []},{"slice_part_id": 1050,"slice_part_name": "Fon_slice_Edge","type": "EDGE","vdus": []},{"slice_part_id": 8005,"slice_part_name": "Fon_slice_Network","type": "NET","vdus": [],"bridges": [],"ports": []}]}
 
 
 #        a = Monitoring()
